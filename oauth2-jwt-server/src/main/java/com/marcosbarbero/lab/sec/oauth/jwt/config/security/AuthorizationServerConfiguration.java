@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
@@ -23,6 +24,8 @@ import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFacto
 
 import javax.sql.DataSource;
 import java.security.KeyPair;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Administrator
@@ -39,7 +42,10 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserDetailsServiceImpl userDetailsService;
+
+    @Autowired
+    private CustomTokenEnhancer customTokenEnhancer;
 
     @Autowired
     private WebResponseExceptionTranslator webResponseExceptionTranslator;
@@ -51,7 +57,12 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     @Bean
     public DefaultTokenServices tokenServices(final TokenStore tokenStore,
                                               final ClientDetailsService clientDetailsService) {
+        // 配置TokenServices参数
         DefaultTokenServices tokenServices = new DefaultTokenServices();
+        // 复用refresh token
+        tokenServices.setReuseRefreshToken(false);
+        tokenServices.setAccessTokenValiditySeconds((int) TimeUnit.SECONDS.toSeconds(7200000));
+        tokenServices.setRefreshTokenValiditySeconds((int) TimeUnit.SECONDS.toSeconds(72000000));
         tokenServices.setSupportRefreshToken(true);
         tokenServices.setTokenStore(tokenStore);
         tokenServices.setClientDetailsService(clientDetailsService);
@@ -73,11 +84,16 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 
     @Override
     public void configure(final AuthorizationServerEndpointsConfigurer endpoints) {
+        TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
+        enhancerChain.setTokenEnhancers(Arrays.asList(customTokenEnhancer,jwtTokenConf.jwtAccessTokenConverter()));
+
         endpoints.authenticationManager(this.authenticationManager)
                 .accessTokenConverter(jwtTokenConf.jwtAccessTokenConverter())
                 .userDetailsService(this.userDetailsService)
                 .tokenStore(jwtTokenConf.tokenStore())
+                .tokenEnhancer(enhancerChain)
                 .exceptionTranslator(webResponseExceptionTranslator);
+
     }
 
     @Override
