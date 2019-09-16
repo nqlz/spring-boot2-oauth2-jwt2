@@ -34,13 +34,13 @@ public class CodeGenarator {
         dataSourceConfig
                 .setDbType(DbType.MYSQL)
                 .setDriverName("com.mysql.cj.jdbc.Driver")
-                .setUrl("jdbc:mysql://localhost:3306/oauth?serverTimezone=GMT%2B8")
+                .setUrl("jdbc:mysql://39.108.130.98:30062/others?serverTimezone=GMT%2B8")
                 .setUsername("root")
-                .setPassword("root");
+                .setPassword("SEesceNfyL");
 
         StrategyConfig strategyConfig = new StrategyConfig();
         strategyConfig
-                .setInclude("users","authorities")
+                .setInclude("job_industry","job_position")
                 .setCapitalMode(true)
                 .setNaming(NamingStrategy.underline_to_camel)
                 .setEntityLombokModel(true)
@@ -51,7 +51,7 @@ public class CodeGenarator {
 
         PackageConfig packageConfig = new PackageConfig();
         packageConfig
-                .setParent("com.marcosbarbero.lab.sec.oauth.jwt")
+                .setParent("cn.boringkiller.others")
                 .setMapper("repository")
                 .setService("service")
                 .setController("controller")
